@@ -1,0 +1,2290 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Life Tracker</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-tertiary: #1a1a25;
+            --bg-card: #16161f;
+            --bg-elevated: #1e1e2a;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --text-muted: #606070;
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+            --success: #10b981;
+            --success-soft: rgba(16, 185, 129, 0.15);
+            --danger: #ef4444;
+            --danger-soft: rgba(239, 68, 68, 0.15);
+            --warning: #f59e0b;
+            --warning-soft: rgba(245, 158, 11, 0.15);
+            --border: rgba(255, 255, 255, 0.08);
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+        }
+
+        .light-theme {
+            --bg-primary: #f8f9fc;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f0f1f5;
+            --bg-card: #ffffff;
+            --bg-elevated: #ffffff;
+            --text-primary: #1a1a2e;
+            --text-secondary: #64648c;
+            --text-muted: #9898b0;
+            --border: rgba(0, 0, 0, 0.08);
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            max-width: 100%;
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+
+        /* Header */
+        .header {
+            padding: 16px 20px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(20px);
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: 700;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* Navigation */
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 24px 0;
+            z-index: 1000;
+            backdrop-filter: blur(20px);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-muted);
+        }
+
+        .nav-item.active {
+            color: var(--accent-primary);
+        }
+
+        .nav-item svg {
+            width: 24px;
+            height: 24px;
+            margin-bottom: 4px;
+        }
+
+        .nav-item span {
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            margin: 12px 16px;
+            border: 1px solid var(--border);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Balance Card */
+        .balance-card {
+            background: var(--accent-gradient);
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .balance-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        }
+
+        .balance-label {
+            font-size: 13px;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 4px;
+        }
+
+        .balance-amount {
+            font-size: 32px;
+            font-weight: 700;
+            color: white;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .balance-change {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-top: 8px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        /* Account Pills */
+        .accounts-row {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 0 16px 12px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .accounts-row::-webkit-scrollbar {
+            display: none;
+        }
+
+        .account-pill {
+            flex-shrink: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 12px 16px;
+            min-width: 140px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .account-pill:hover {
+            border-color: var(--accent-primary);
+        }
+
+        .account-pill.active {
+            border-color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .account-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .account-name {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 2px;
+        }
+
+        .account-balance {
+            font-size: 16px;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Transactions */
+        .transaction-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .transaction-item:last-child {
+            border-bottom: none;
+        }
+
+        .transaction-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin-right: 12px;
+            background: var(--bg-tertiary);
+        }
+
+        .transaction-info {
+            flex: 1;
+        }
+
+        .transaction-name {
+            font-size: 15px;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .transaction-date {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .transaction-amount {
+            font-size: 15px;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .transaction-amount.income {
+            color: var(--success);
+        }
+
+        .transaction-amount.expense {
+            color: var(--danger);
+        }
+
+        /* Habits */
+        .habit-item {
+            display: flex;
+            align-items: center;
+            padding: 14px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+            margin-bottom: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .habit-checkbox {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            margin-right: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            flex-shrink: 0;
+        }
+
+        .habit-checkbox.checked {
+            background: var(--success);
+            border-color: var(--success);
+            animation: checkPop 0.4s ease;
+        }
+
+        @keyframes checkPop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .habit-checkbox svg {
+            width: 16px;
+            height: 16px;
+            color: white;
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.2s ease;
+        }
+
+        .habit-checkbox.checked svg {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .habit-info {
+            flex: 1;
+        }
+
+        .habit-name {
+            font-size: 15px;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .habit-streak {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            color: var(--warning);
+            font-weight: 500;
+        }
+
+        .streak-fire {
+            animation: firePulse 1s ease infinite;
+        }
+
+        @keyframes firePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* Mood Tracker */
+        .mood-selector {
+            display: flex;
+            justify-content: space-around;
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-lg);
+        }
+
+        .mood-option {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+
+        .mood-option:hover {
+            transform: scale(1.1);
+        }
+
+        .mood-option.selected {
+            border-color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.2);
+            transform: scale(1.15);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: var(--accent-gradient);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--accent-primary);
+        }
+
+        .btn-danger {
+            background: var(--danger-soft);
+            color: var(--danger);
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--accent-gradient);
+            color: white;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+            transition: all 0.2s ease;
+            z-index: 99;
+        }
+
+        .fab:hover {
+            transform: scale(1.05);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            display: flex;
+            align-items: flex-end;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            width: 100%;
+            max-height: 90vh;
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+            padding: 24px;
+            animation: slideUp 0.3s ease;
+            overflow-y: auto;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .modal-handle {
+            width: 40px;
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            margin: 0 auto 20px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        select.form-input {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23a0a0b0' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 40px;
+        }
+
+        /* Toggle Buttons */
+        .toggle-group {
+            display: flex;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+            padding: 4px;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .toggle-btn.active {
+            background: var(--accent-gradient);
+            color: white;
+        }
+
+        /* Category Grid */
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .category-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px 8px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+
+        .category-item:hover {
+            background: var(--bg-elevated);
+        }
+
+        .category-item.selected {
+            border-color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .category-emoji {
+            font-size: 24px;
+            margin-bottom: 6px;
+        }
+
+        .category-name {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        /* Analytics */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .stat-card {
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+            padding: 14px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .stat-value.positive {
+            color: var(--success);
+        }
+
+        .stat-value.negative {
+            color: var(--danger);
+        }
+
+        /* Chart placeholder */
+        .chart-container {
+            height: 200px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            padding: 16px;
+            margin-top: 12px;
+        }
+
+        .chart-bar {
+            width: 32px;
+            background: var(--accent-gradient);
+            border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+            transition: height 0.3s ease;
+        }
+
+        /* AI Insights */
+        .ai-insight-card {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            margin: 12px 16px;
+        }
+
+        .ai-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .ai-badge {
+            background: var(--accent-gradient);
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 20px;
+        }
+
+        .ai-insight-text {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-primary);
+        }
+
+        /* Settings */
+        .settings-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+            margin-bottom: 8px;
+        }
+
+        .settings-label {
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .toggle-switch {
+            width: 50px;
+            height: 28px;
+            background: var(--bg-elevated);
+            border-radius: 14px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .toggle-switch.active {
+            background: var(--accent-primary);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            top: 3px;
+            left: 3px;
+            transition: all 0.2s ease;
+        }
+
+        .toggle-switch.active::after {
+            left: 25px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        .empty-state-text {
+            font-size: 14px;
+        }
+
+        /* Streak Banner */
+        .streak-banner {
+            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            margin: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .streak-icon {
+            font-size: 36px;
+            animation: firePulse 1s ease infinite;
+        }
+
+        .streak-content {
+            flex: 1;
+        }
+
+        .streak-number {
+            font-size: 28px;
+            font-weight: 800;
+            color: white;
+        }
+
+        .streak-text {
+            font-size: 13px;
+            color: rgba(255,255,255,0.9);
+        }
+
+        /* Week View */
+        .week-view {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+        }
+
+        .week-day {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .week-day-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .week-day-dot {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .week-day-dot.completed {
+            background: var(--success);
+            color: white;
+        }
+
+        .week-day-dot.today {
+            border: 2px solid var(--accent-primary);
+        }
+
+        .week-day-dot.missed {
+            background: var(--danger-soft);
+            color: var(--danger);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 2px;
+        }
+
+        /* Currency selector */
+        .currency-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 4px;
+        }
+
+        .currency-item {
+            padding: 10px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-sm);
+            text-align: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .currency-item:hover {
+            background: var(--bg-elevated);
+        }
+
+        .currency-item.selected {
+            border-color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .currency-code {
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .currency-name {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* Loading */
+        .loading-spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Tab content */
+        .tab-content {
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* Period Selector */
+        .period-selector {
+            display: flex;
+            gap: 8px;
+            padding: 0 16px;
+            margin-bottom: 12px;
+        }
+
+        .period-btn {
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border: none;
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .period-btn.active {
+            background: var(--accent-gradient);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect, useCallback, useMemo } = React;
+
+        // ==================== DATA & CONSTANTS ====================
+        
+        const CURRENCIES = {
+            fiat: [
+                { code: 'USD', name: 'US Dollar', symbol: '$' },
+                { code: 'EUR', name: 'Euro', symbol: '€' },
+                { code: 'GBP', name: 'British Pound', symbol: '£' },
+                { code: 'RUB', name: 'Russian Ruble', symbol: '₽' },
+                { code: 'UAH', name: 'Ukrainian Hryvnia', symbol: '₴' },
+                { code: 'JPY', name: 'Japanese Yen', symbol: '¥' },
+                { code: 'CNY', name: 'Chinese Yuan', symbol: '¥' },
+                { code: 'KRW', name: 'Korean Won', symbol: '₩' },
+                { code: 'INR', name: 'Indian Rupee', symbol: '₹' },
+                { code: 'BRL', name: 'Brazilian Real', symbol: 'R$' },
+                { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$' },
+                { code: 'AUD', name: 'Australian Dollar', symbol: 'A$' },
+                { code: 'CHF', name: 'Swiss Franc', symbol: 'Fr' },
+                { code: 'PLN', name: 'Polish Zloty', symbol: 'zł' },
+                { code: 'TRY', name: 'Turkish Lira', symbol: '₺' },
+                { code: 'AED', name: 'UAE Dirham', symbol: 'د.إ' },
+                { code: 'SGD', name: 'Singapore Dollar', symbol: 'S$' },
+                { code: 'HKD', name: 'Hong Kong Dollar', symbol: 'HK$' },
+                { code: 'SEK', name: 'Swedish Krona', symbol: 'kr' },
+                { code: 'NOK', name: 'Norwegian Krone', symbol: 'kr' },
+            ],
+            crypto: [
+                { code: 'BTC', name: 'Bitcoin', symbol: '₿' },
+                { code: 'ETH', name: 'Ethereum', symbol: 'Ξ' },
+                { code: 'USDT', name: 'Tether', symbol: '₮' },
+                { code: 'USDC', name: 'USD Coin', symbol: '$' },
+                { code: 'BNB', name: 'Binance Coin', symbol: 'BNB' },
+                { code: 'XRP', name: 'Ripple', symbol: 'XRP' },
+                { code: 'SOL', name: 'Solana', symbol: 'SOL' },
+                { code: 'ADA', name: 'Cardano', symbol: 'ADA' },
+                { code: 'DOGE', name: 'Dogecoin', symbol: 'Ð' },
+                { code: 'TON', name: 'Toncoin', symbol: 'TON' },
+                { code: 'DOT', name: 'Polkadot', symbol: 'DOT' },
+                { code: 'MATIC', name: 'Polygon', symbol: 'MATIC' },
+                { code: 'LTC', name: 'Litecoin', symbol: 'Ł' },
+                { code: 'AVAX', name: 'Avalanche', symbol: 'AVAX' },
+            ]
+        };
+
+        const DEFAULT_CATEGORIES = {
+            expense: [
+                { id: 'food', name: 'Еда', emoji: '🍔', color: '#ef4444' },
+                { id: 'transport', name: 'Транспорт', emoji: '🚗', color: '#3b82f6' },
+                { id: 'shopping', name: 'Покупки', emoji: '🛍️', color: '#8b5cf6' },
+                { id: 'entertainment', name: 'Развлечения', emoji: '🎮', color: '#ec4899' },
+                { id: 'health', name: 'Здоровье', emoji: '💊', color: '#10b981' },
+                { id: 'utilities', name: 'Коммуналка', emoji: '💡', color: '#f59e0b' },
+                { id: 'rent', name: 'Аренда', emoji: '🏠', color: '#6366f1' },
+                { id: 'subscriptions', name: 'Подписки', emoji: '📱', color: '#14b8a6' },
+                { id: 'education', name: 'Образование', emoji: '📚', color: '#a855f7' },
+                { id: 'gifts', name: 'Подарки', emoji: '🎁', color: '#f43f5e' },
+                { id: 'travel', name: 'Путешествия', emoji: '✈️', color: '#0ea5e9' },
+                { id: 'pets', name: 'Питомцы', emoji: '🐕', color: '#84cc16' },
+                { id: 'beauty', name: 'Красота', emoji: '💅', color: '#d946ef' },
+                { id: 'sports', name: 'Спорт', emoji: '⚽', color: '#22c55e' },
+                { id: 'other_expense', name: 'Другое', emoji: '📦', color: '#64748b' },
+            ],
+            income: [
+                { id: 'salary', name: 'Зарплата', emoji: '💼', color: '#10b981' },
+                { id: 'freelance', name: 'Фриланс', emoji: '💻', color: '#3b82f6' },
+                { id: 'investments', name: 'Инвестиции', emoji: '📈', color: '#8b5cf6' },
+                { id: 'gifts_income', name: 'Подарки', emoji: '🎁', color: '#f43f5e' },
+                { id: 'cashback', name: 'Кэшбек', emoji: '💸', color: '#f59e0b' },
+                { id: 'rental', name: 'Аренда', emoji: '🏠', color: '#6366f1' },
+                { id: 'other_income', name: 'Другое', emoji: '✨', color: '#64748b' },
+            ]
+        };
+
+        const MOODS = [
+            { id: 1, emoji: '😢', label: 'Ужасно' },
+            { id: 2, emoji: '😕', label: 'Плохо' },
+            { id: 3, emoji: '😐', label: 'Норм' },
+            { id: 4, emoji: '🙂', label: 'Хорошо' },
+            { id: 5, emoji: '😄', label: 'Отлично' },
+        ];
+
+        const ACCOUNT_ICONS = ['💳', '💵', '🏦', '💰', '🐷', '💎', '🪙', '📊'];
+
+        // ==================== STORAGE HELPERS ====================
+        
+        const storage = {
+            async get(key) {
+                if (window.Telegram?.WebApp?.CloudStorage) {
+                    return new Promise((resolve) => {
+                        window.Telegram.WebApp.CloudStorage.getItem(key, (err, value) => {
+                            if (err || !value) resolve(null);
+                            else {
+                                try {
+                                    resolve(JSON.parse(value));
+                                } catch {
+                                    resolve(null);
+                                }
+                            }
+                        });
+                    });
+                }
+                const value = localStorage.getItem(key);
+                return value ? JSON.parse(value) : null;
+            },
+            async set(key, value) {
+                const stringValue = JSON.stringify(value);
+                if (window.Telegram?.WebApp?.CloudStorage) {
+                    return new Promise((resolve) => {
+                        window.Telegram.WebApp.CloudStorage.setItem(key, stringValue, () => resolve());
+                    });
+                }
+                localStorage.setItem(key, stringValue);
+            }
+        };
+
+        // ==================== ICONS ====================
+        
+        const Icons = {
+            Dashboard: () => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                    <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                </svg>
+            ),
+            Wallet: () => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/>
+                    <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>
+                </svg>
+            ),
+            Habits: () => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+            ),
+            Analytics: () => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
+                    <line x1="6" y1="20" x2="6" y2="14"/>
+                </svg>
+            ),
+            Settings: () => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6m-9-9h6m6 0h6"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+            ),
+            Check: () => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                </svg>
+            ),
+            Plus: () => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+            ),
+            Close: () => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            ),
+            Trash: () => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+            ),
+            Sparkles: () => (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+                    <path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/>
+                </svg>
+            ),
+        };
+
+        // ==================== UTILITY FUNCTIONS ====================
+        
+        const formatMoney = (amount, currency = 'USD') => {
+            const curr = [...CURRENCIES.fiat, ...CURRENCIES.crypto].find(c => c.code === currency);
+            const symbol = curr?.symbol || currency;
+            const formatted = Math.abs(amount).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return `${amount < 0 ? '-' : ''}${symbol}${formatted}`;
+        };
+
+        const formatDate = (dateStr) => {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: '2-digit' });
+        };
+
+        const getToday = () => new Date().toISOString().split('T')[0];
+
+        const getDaysInStreak = (completedDates) => {
+            if (!completedDates || completedDates.length === 0) return 0;
+            const sorted = [...completedDates].sort((a, b) => new Date(b) - new Date(a));
+            const today = getToday();
+            const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+            
+            if (sorted[0] !== today && sorted[0] !== yesterday) return 0;
+            
+            let streak = 1;
+            for (let i = 1; i < sorted.length; i++) {
+                const curr = new Date(sorted[i-1]);
+                const prev = new Date(sorted[i]);
+                const diff = (curr - prev) / 86400000;
+                if (diff === 1) streak++;
+                else break;
+            }
+            return streak;
+        };
+
+        const getWeekDays = () => {
+            const days = [];
+            const today = new Date();
+            const dayOfWeek = today.getDay();
+            const monday = new Date(today);
+            monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+            
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(monday);
+                d.setDate(monday.getDate() + i);
+                days.push({
+                    date: d.toISOString().split('T')[0],
+                    label: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'][i],
+                    isToday: d.toISOString().split('T')[0] === getToday()
+                });
+            }
+            return days;
+        };
+
+        // ==================== COMPONENTS ====================
+        
+        // Navigation Bar
+        const NavBar = ({ activeTab, setActiveTab }) => {
+            const tabs = [
+                { id: 'dashboard', icon: Icons.Dashboard, label: 'Главная' },
+                { id: 'transactions', icon: Icons.Wallet, label: 'Финансы' },
+                { id: 'habits', icon: Icons.Habits, label: 'Привычки' },
+                { id: 'analytics', icon: Icons.Analytics, label: 'Аналитика' },
+                { id: 'settings', icon: Icons.Settings, label: 'Настройки' },
+            ];
+
+            return (
+                <nav className="nav-bar">
+                    {tabs.map(tab => (
+                        <div 
+                            key={tab.id}
+                            className={`nav-item ${activeTab === tab.id ? 'active' : ''}`}
+                            onClick={() => setActiveTab(tab.id)}
+                        >
+                            <tab.icon />
+                            <span>{tab.label}</span>
+                        </div>
+                    ))}
+                </nav>
+            );
+        };
+
+        // Modal Component
+        const Modal = ({ isOpen, onClose, title, children }) => {
+            if (!isOpen) return null;
+            
+            return (
+                <div className="modal-overlay" onClick={onClose}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <div className="modal-handle" />
+                        <div className="modal-title">{title}</div>
+                        {children}
+                    </div>
+                </div>
+            );
+        };
+
+        // Dashboard Tab
+        const DashboardTab = ({ data, setActiveTab }) => {
+            const totalBalance = useMemo(() => {
+                return data.accounts.reduce((sum, acc) => sum + acc.balance, 0);
+            }, [data.accounts]);
+
+            const todayHabits = useMemo(() => {
+                const today = getToday();
+                return data.habits.filter(h => h.completedDates?.includes(today)).length;
+            }, [data.habits]);
+
+            const maxStreak = useMemo(() => {
+                return Math.max(0, ...data.habits.map(h => getDaysInStreak(h.completedDates)));
+            }, [data.habits]);
+
+            const recentTransactions = useMemo(() => {
+                return [...data.transactions]
+                    .sort((a, b) => new Date(b.date) - new Date(a.date))
+                    .slice(0, 5);
+            }, [data.transactions]);
+
+            const todayMood = data.moods?.find(m => m.date === getToday());
+
+            return (
+                <div className="tab-content">
+                    <div className="header">
+                        <div className="header-title">Life Tracker</div>
+                        <div className="header-subtitle">{new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+                    </div>
+
+                    <div className="card balance-card">
+                        <div className="balance-label">Общий баланс</div>
+                        <div className="balance-amount">{formatMoney(totalBalance, data.settings?.mainCurrency || 'USD')}</div>
+                        <div className="balance-change">
+                            {data.accounts.length} счетов
+                        </div>
+                    </div>
+
+                    {maxStreak > 0 && (
+                        <div className="streak-banner">
+                            <span className="streak-icon">🔥</span>
+                            <div className="streak-content">
+                                <div className="streak-number">{maxStreak} дней</div>
+                                <div className="streak-text">Лучшая серия!</div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="card">
+                        <div className="card-header">
+                            <span className="card-title">Сегодня</span>
+                        </div>
+                        <div className="stat-grid">
+                            <div className="stat-card">
+                                <div className="stat-label">Привычки</div>
+                                <div className="stat-value">{todayHabits}/{data.habits.length}</div>
+                            </div>
+                            <div className="stat-card">
+                                <div className="stat-label">Настроение</div>
+                                <div className="stat-value">{todayMood ? MOODS.find(m => m.id === todayMood.mood)?.emoji : '—'}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="card">
+                        <div className="card-header">
+                            <span className="card-title">Последние операции</span>
+                            <button className="btn btn-ghost" onClick={() => setActiveTab('transactions')}>Все</button>
+                        </div>
+                        {recentTransactions.length === 0 ? (
+                            <div className="empty-state">
+                                <div className="empty-state-icon">💸</div>
+                                <div className="empty-state-text">Нет операций</div>
+                            </div>
+                        ) : (
+                            recentTransactions.map(t => {
+                                const category = [...DEFAULT_CATEGORIES.expense, ...DEFAULT_CATEGORIES.income, ...(data.customCategories || [])]
+                                    .find(c => c.id === t.categoryId);
+                                return (
+                                    <div key={t.id} className="transaction-item">
+                                        <div className="transaction-icon" style={{ background: category?.color + '20' }}>
+                                            {category?.emoji || '📝'}
+                                        </div>
+                                        <div className="transaction-info">
+                                            <div className="transaction-name">{t.description || category?.name}</div>
+                                            <div className="transaction-date">{formatDate(t.date)}</div>
+                                        </div>
+                                        <div className={`transaction-amount ${t.type}`}>
+                                            {t.type === 'income' ? '+' : '-'}{formatMoney(Math.abs(t.amount), t.currency)}
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        // Transactions Tab
+        const TransactionsTab = ({ data, setData }) => {
+            const [showModal, setShowModal] = useState(false);
+            const [showAccountModal, setShowAccountModal] = useState(false);
+            const [transactionType, setTransactionType] = useState('expense');
+            const [formData, setFormData] = useState({
+                amount: '',
+                categoryId: '',
+                description: '',
+                accountId: '',
+                currency: 'USD',
+                date: getToday()
+            });
+            const [accountForm, setAccountForm] = useState({
+                name: '',
+                currency: 'USD',
+                balance: '',
+                icon: '💳'
+            });
+
+            const allCategories = useMemo(() => ({
+                expense: [...DEFAULT_CATEGORIES.expense, ...(data.customCategories?.filter(c => c.type === 'expense') || [])],
+                income: [...DEFAULT_CATEGORIES.income, ...(data.customCategories?.filter(c => c.type === 'income') || [])]
+            }), [data.customCategories]);
+
+            const handleAddTransaction = () => {
+                if (!formData.amount || !formData.categoryId) return;
+                
+                const newTransaction = {
+                    id: Date.now().toString(),
+                    type: transactionType,
+                    amount: parseFloat(formData.amount),
+                    categoryId: formData.categoryId,
+                    description: formData.description,
+                    accountId: formData.accountId,
+                    currency: formData.currency,
+                    date: formData.date
+                };
+
+                const updatedData = {
+                    ...data,
+                    transactions: [...data.transactions, newTransaction]
+                };
+
+                if (formData.accountId) {
+                    const accIndex = updatedData.accounts.findIndex(a => a.id === formData.accountId);
+                    if (accIndex !== -1) {
+                        const change = transactionType === 'income' ? parseFloat(formData.amount) : -parseFloat(formData.amount);
+                        updatedData.accounts[accIndex].balance += change;
+                    }
+                }
+
+                setData(updatedData);
+                setShowModal(false);
+                setFormData({ amount: '', categoryId: '', description: '', accountId: '', currency: 'USD', date: getToday() });
+            };
+
+            const handleAddAccount = () => {
+                if (!accountForm.name) return;
+                
+                const newAccount = {
+                    id: Date.now().toString(),
+                    name: accountForm.name,
+                    currency: accountForm.currency,
+                    balance: parseFloat(accountForm.balance) || 0,
+                    icon: accountForm.icon
+                };
+
+                setData({
+                    ...data,
+                    accounts: [...data.accounts, newAccount]
+                });
+                setShowAccountModal(false);
+                setAccountForm({ name: '', currency: 'USD', balance: '', icon: '💳' });
+            };
+
+            return (
+                <div className="tab-content">
+                    <div className="header">
+                        <div className="header-title">Финансы</div>
+                        <div className="header-subtitle">Управление счетами и транзакциями</div>
+                    </div>
+
+                    <div className="accounts-row">
+                        {data.accounts.map(acc => (
+                            <div key={acc.id} className="account-pill">
+                                <div className="account-icon" style={{ background: 'var(--accent-gradient)' }}>
+                                    {acc.icon}
+                                </div>
+                                <div className="account-name">{acc.name}</div>
+                                <div className="account-balance">{formatMoney(acc.balance, acc.currency)}</div>
+                            </div>
+                        ))}
+                        <div className="account-pill" onClick={() => setShowAccountModal(true)} style={{ cursor: 'pointer' }}>
+                            <div className="account-icon" style={{ background: 'var(--bg-tertiary)', fontSize: '24px' }}>+</div>
+                            <div className="account-name">Добавить</div>
+                            <div className="account-balance">счёт</div>
+                        </div>
+                    </div>
+
+                    <div className="card">
+                        <div className="card-header">
+                            <span className="card-title">Все операции</span>
+                        </div>
+                        {data.transactions.length === 0 ? (
+                            <div className="empty-state">
+                                <div className="empty-state-icon">📊</div>
+                                <div className="empty-state-text">Добавьте первую операцию</div>
+                            </div>
+                        ) : (
+                            [...data.transactions]
+                                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                                .map(t => {
+                                    const category = [...DEFAULT_CATEGORIES.expense, ...DEFAULT_CATEGORIES.income, ...(data.customCategories || [])]
+                                        .find(c => c.id === t.categoryId);
+                                    return (
+                                        <div key={t.id} className="transaction-item">
+                                            <div className="transaction-icon" style={{ background: category?.color + '20' }}>
+                                                {category?.emoji || '📝'}
+                                            </div>
+                                            <div className="transaction-info">
+                                                <div className="transaction-name">{t.description || category?.name}</div>
+                                                <div className="transaction-date">{formatDate(t.date)}</div>
+                                            </div>
+                                            <div className={`transaction-amount ${t.type}`}>
+                                                {t.type === 'income' ? '+' : '-'}{formatMoney(Math.abs(t.amount), t.currency)}
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                        )}
+                    </div>
+
+                    <button className="fab" onClick={() => setShowModal(true)}>
+                        <Icons.Plus />
+                    </button>
+
+                    {/* Add Transaction Modal */}
+                    <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Новая операция">
+                        <div className="form-group">
+                            <div className="toggle-group">
+                                <button 
+                                    className={`toggle-btn ${transactionType === 'expense' ? 'active' : ''}`}
+                                    onClick={() => setTransactionType('expense')}
+                                >
+                                    Расход
+                                </button>
+                                <button 
+                                    className={`toggle-btn ${transactionType === 'income' ? 'active' : ''}`}
+                                    onClick={() => setTransactionType('income')}
+                                >
+                                    Доход
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Сумма</label>
+                            <input 
+                                type="number"
+                                className="form-input"
+                                placeholder="0.00"
+                                value={formData.amount}
+                                onChange={e => setFormData({...formData, amount: e.target.value})}
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Счёт</label>
+                            <select 
+                                className="form-input"
+                                value={formData.accountId}
+                                onChange={e => setFormData({...formData, accountId: e.target.value})}
+                            >
+                                <option value="">Без счёта</option>
+                                {data.accounts.map(acc => (
+                                    <option key={acc.id} value={acc.id}>{acc.icon} {acc.name}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Валюта</label>
+                            <select 
+                                className="form-input"
+                                value={formData.currency}
+                                onChange={e => setFormData({...formData, currency: e.target.value})}
+                            >
+                                <optgroup label="Фиатные валюты">
+                                    {CURRENCIES.fiat.map(c => (
+                                        <option key={c.code} value={c.code}>{c.code} - {c.name}</option>
+                                    ))}
+                                </optgroup>
+                                <optgroup label="Криптовалюты">
+                                    {CURRENCIES.crypto.map(c => (
+                                        <option key={c.code} value={c.code}>{c.code} - {c.name}</option>
+                                    ))}
+                                </optgroup>
+                            </select>
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Категория</label>
+                            <div className="category-grid">
+                                {allCategories[transactionType].map(cat => (
+                                    <div 
+                                        key={cat.id}
+                                        className={`category-item ${formData.categoryId === cat.id ? 'selected' : ''}`}
+                                        onClick={() => setFormData({...formData, categoryId: cat.id})}
+                                    >
+                                        <span className="category-emoji">{cat.emoji}</span>
+                                        <span className="category-name">{cat.name}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Описание</label>
+                            <input 
+                                type="text"
+                                className="form-input"
+                                placeholder="Опционально"
+                                value={formData.description}
+                                onChange={e => setFormData({...formData, description: e.target.value})}
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Дата</label>
+                            <input 
+                                type="date"
+                                className="form-input"
+                                value={formData.date}
+                                onChange={e => setFormData({...formData, date: e.target.value})}
+                            />
+                        </div>
+
+                        <button className="btn btn-primary" style={{ width: '100%', marginTop: '8px' }} onClick={handleAddTransaction}>
+                            Добавить
+                        </button>
+                    </Modal>
+
+                    {/* Add Account Modal */}
+                    <Modal isOpen={showAccountModal} onClose={() => setShowAccountModal(false)} title="Новый счёт">
+                        <div className="form-group">
+                            <label className="form-label">Иконка</label>
+                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                {ACCOUNT_ICONS.map(icon => (
+                                    <div 
+                                        key={icon}
+                                        className={`category-item ${accountForm.icon === icon ? 'selected' : ''}`}
+                                        style={{ width: '48px', padding: '8px' }}
+                                        onClick={() => setAccountForm({...accountForm, icon})}
+                                    >
+                                        <span style={{ fontSize: '24px' }}>{icon}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Название</label>
+                            <input 
+                                type="text"
+                                className="form-input"
+                                placeholder="Например: Основная карта"
+                                value={accountForm.name}
+                                onChange={e => setAccountForm({...accountForm, name: e.target.value})}
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Валюта</label>
+                            <select 
+                                className="form-input"
+                                value={accountForm.currency}
+                                onChange={e => setAccountForm({...accountForm, currency: e.target.value})}
+                            >
+                                <optgroup label="Фиатные валюты">
+                                    {CURRENCIES.fiat.map(c => (
+                                        <option key={c.code} value={c.code}>{c.code} - {c.name}</option>
+                                    ))}
+                                </optgroup>
+                                <optgroup label="Криптовалюты">
+                                    {CURRENCIES.crypto.map(c => (
+                                        <option key={c.code} value={c.code}>{c.code} - {c.name}</option>
+                                    ))}
+                                </optgroup>
+                            </select>
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Начальный баланс</label>
+                            <input 
+                                type="number"
+                                className="form-input"
+                                placeholder="0.00"
+                                value={accountForm.balance}
+                                onChange={e => setAccountForm({...accountForm, balance: e.target.value})}
+                            />
+                        </div>
+
+                        <button className="btn btn-primary" style={{ width: '100%', marginTop: '8px' }} onClick={handleAddAccount}>
+                            Создать счёт
+                        </button>
+                    </Modal>
+                </div>
+            );
+        };
+
+        // Habits Tab
+        const HabitsTab = ({ data, setData }) => {
+            const [showModal, setShowModal] = useState(false);
+            const [newHabit, setNewHabit] = useState({ name: '', emoji: '✅' });
+            const today = getToday();
+            const weekDays = getWeekDays();
+            const todayMood = data.moods?.find(m => m.date === today);
+
+            const toggleHabit = (habitId) => {
+                const updatedHabits = data.habits.map(h => {
+                    if (h.id === habitId) {
+                        const dates = h.completedDates || [];
+                        if (dates.includes(today)) {
+                            return { ...h, completedDates: dates.filter(d => d !== today) };
+                        } else {
+                            return { ...h, completedDates: [...dates, today] };
+                        }
+                    }
+                    return h;
+                });
+                setData({ ...data, habits: updatedHabits });
+            };
+
+            const setMood = (moodId) => {
+                const existingMoods = data.moods || [];
+                const filtered = existingMoods.filter(m => m.date !== today);
+                setData({
+                    ...data,
+                    moods: [...filtered, { date: today, mood: moodId }]
+                });
+            };
+
+            const addHabit = () => {
+                if (!newHabit.name) return;
+                const habit = {
+                    id: Date.now().toString(),
+                    name: newHabit.name,
+                    emoji: newHabit.emoji,
+                    completedDates: []
+                };
+                setData({ ...data, habits: [...data.habits, habit] });
+                setShowModal(false);
+                setNewHabit({ name: '', emoji: '✅' });
+            };
+
+            const deleteHabit = (habitId) => {
+                setData({
+                    ...data,
+                    habits: data.habits.filter(h => h.id !== habitId)
+                });
+            };
+
+            return (
+                <div className="tab-content">
+                    <div className="header">
+                        <div className="header-title">Привычки</div>
+                        <div className="header-subtitle">Отслеживай ежедневные ритуалы</div>
+                    </div>
+
+                    <div className="card">
+                        <div className="card-header">
+                            <span className="card-title">Как настроение?</span>
+                        </div>
+                        <div className="mood-selector">
+                            {MOODS.map(mood => (
+                                <div 
+                                    key={mood.id}
+                                    className={`mood-option ${todayMood?.mood === mood.id ? 'selected' : ''}`}
+                                    onClick={() => setMood(mood.id)}
+                                >
+                                    {mood.emoji}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="card">
+                        <div className="card-header">
+                            <span className="card-title">Сегодня</span>
+                            <button className="btn btn-ghost" onClick={() => setShowModal(true)}>
+                                <Icons.Plus /> Добавить
+                            </button>
+                        </div>
+                        
+                        {data.habits.length === 0 ? (
+                            <div className="empty-state">
+                                <div className="empty-state-icon">🎯</div>
+                                <div className="empty-state-text">Добавьте первую привычку</div>
+                            </div>
+                        ) : (
+                            data.habits.map(habit => {
+                                const isCompleted = habit.completedDates?.includes(today);
+                                const streak = getDaysInStreak(habit.completedDates);
+                                return (
+                                    <div key={habit.id} className="habit-item">
+                                        <div 
+                                            className={`habit-checkbox ${isCompleted ? 'checked' : ''}`}
+                                            onClick={() => toggleHabit(habit.id)}
+                                        >
+                                            <Icons.Check />
+                                        </div>
+                                        <div className="habit-info">
+                                            <div className="habit-name">{habit.emoji} {habit.name}</div>
+                                            {streak > 0 && (
+                                                <div className="habit-streak">
+                                                    <span className="streak-fire">🔥</span>
+                                                    {streak} дней подряд
+                                                </div>
+                                            )}
+                                        </div>
+                                        <button 
+                                            className="btn btn-ghost" 
+                                            style={{ padding: '8px', color: 'var(--text-muted)' }}
+                                            onClick={() => deleteHabit(habit.id)}
+                                        >
+                                            <Icons.Trash />
+                                        </button>
+                                    </div>
+                                );
+                            })
+                        )}
+                    </div>
+
+                    {data.habits.length > 0 && (
+                        <div className="card">
+                            <div className="card-header">
+                                <span className="card-title">Эта неделя</span>
+                            </div>
+                            {data.habits.map(habit => (
+                                <div key={habit.id} style={{ marginBottom: '16px' }}>
+                                    <div style={{ fontSize: '14px', marginBottom: '8px', fontWeight: '500' }}>
+                                        {habit.emoji} {habit.name}
+                                    </div>
+                                    <div className="week-view">
+                                        {weekDays.map(day => {
+                                            const isCompleted = habit.completedDates?.includes(day.date);
+                                            const isPast = new Date(day.date) < new Date(today);
+                                            return (
+                                                <div key={day.date} className="week-day">
+                                                    <span className="week-day-label">{day.label}</span>
+                                                    <div className={`week-day-dot ${isCompleted ? 'completed' : ''} ${day.isToday ? 'today' : ''} ${isPast && !isCompleted ? 'missed' : ''}`}>
+                                                        {isCompleted ? '✓' : isPast ? '✗' : ''}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Новая привычка">
+                        <div className="form-group">
+                            <label className="form-label">Эмодзи</label>
+                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                {['✅', '💪', '📚', '🏃', '💧', '🧘', '😴', '🥗', '💊', '🎯', '✍️', '🎨'].map(emoji => (
+                                    <div 
+                                        key={emoji}
+                                        className={`category-item ${newHabit.emoji === emoji ? 'selected' : ''}`}
+                                        style={{ width: '48px', padding: '8px' }}
+                                        onClick={() => setNewHabit({...newHabit, emoji})}
+                                    >
+                                        <span style={{ fontSize: '24px' }}>{emoji}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Название</label>
+                            <input 
+                                type="text"
+                                className="form-input"
+                                placeholder="Например: Медитация 10 минут"
+                                value={newHabit.name}
+                                onChange={e => setNewHabit({...newHabit, name: e.target.value})}
+                            />
+                        </div>
+
+                        <button className="btn btn-primary" style={{ width: '100%', marginTop: '8px' }} onClick={addHabit}>
+                            Добавить привычку
+                        </button>
+                    </Modal>
+                </div>
+            );
+        };
+
+        // Analytics Tab
+        const AnalyticsTab = ({ data }) => {
+            const [period, setPeriod] = useState('week');
+            const [showAI, setShowAI] = useState(false);
+            const [aiInsight, setAiInsight] = useState('');
+            const [loading, setLoading] = useState(false);
+
+            const stats = useMemo(() => {
+                const now = new Date();
+                let startDate;
+                
+                if (period === 'week') {
+                    startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                } else if (period === 'month') {
+                    startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                } else {
+                    startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+                }
+
+                const filtered = data.transactions.filter(t => new Date(t.date) >= startDate);
+                
+                const income = filtered.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+                const expenses = filtered.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+
+                const categoryStats = {};
+                filtered.filter(t => t.type === 'expense').forEach(t => {
+                    if (!categoryStats[t.categoryId]) {
+                        categoryStats[t.categoryId] = 0;
+                    }
+                    categoryStats[t.categoryId] += t.amount;
+                });
+
+                const habitCompletionRate = data.habits.length > 0 
+                    ? data.habits.reduce((sum, h) => {
+                        const dates = h.completedDates || [];
+                        const inPeriod = dates.filter(d => new Date(d) >= startDate).length;
+                        const daysInPeriod = Math.ceil((now - startDate) / (24 * 60 * 60 * 1000));
+                        return sum + (inPeriod / daysInPeriod);
+                    }, 0) / data.habits.length * 100
+                    : 0;
+
+                const moodAvg = data.moods?.filter(m => new Date(m.date) >= startDate).reduce((sum, m, _, arr) => sum + m.mood / arr.length, 0) || 0;
+
+                return { income, expenses, balance: income - expenses, categoryStats, habitCompletionRate, moodAvg };
+            }, [data, period]);
+
+            const generateAIInsight = async () => {
+                setLoading(true);
+                
+                // Simulate AI response for demo (in real app, call Claude API)
+                setTimeout(() => {
+                    const insights = [
+                        `📊 Анализ за ${period === 'week' ? 'неделю' : period === 'month' ? 'месяц' : 'год'}:\n\n💰 Ваш баланс ${stats.balance >= 0 ? 'положительный' : 'отрицательный'} (${stats.balance >= 0 ? '+' : ''}${stats.balance.toFixed(0)}). ${stats.balance >= 0 ? 'Отличная работа!' : 'Стоит пересмотреть расходы.'}\n\n🎯 Привычки выполнены на ${stats.habitCompletionRate.toFixed(0)}%. ${stats.habitCompletionRate >= 70 ? 'Вы молодец!' : 'Попробуйте установить напоминания.'}\n\n😊 Среднее настроение: ${stats.moodAvg.toFixed(1)}/5. ${stats.moodAvg >= 3.5 ? 'Позитивный тренд!' : 'Возможно, стоит добавить больше приятных активностей.'}`,
+                        `🔍 Инсайты:\n\n${stats.expenses > stats.income ? '⚠️ Расходы превышают доходы. Рекомендую проанализировать крупнейшие категории трат.' : '✅ Доходы покрывают расходы — отлично!'}\n\n${stats.habitCompletionRate < 50 ? '💡 Совет: начните с 1-2 привычек и постепенно добавляйте новые.' : '🔥 Отличный прогресс с привычками! Продолжайте в том же духе.'}\n\n${data.moods?.length < 7 ? '📝 Отмечайте настроение каждый день для лучшей аналитики.' : `📈 Ваше среднее настроение ${stats.moodAvg >= 3 ? 'выше среднего' : 'можно улучшить'}.`}`
+                    ];
+                    setAiInsight(insights[Math.floor(Math.random() * insights.length)]);
+                    setShowAI(true);
+                    setLoading(false);
+                }, 1500);
+            };
+
+            const allCategories = [...DEFAULT_CATEGORIES.expense, ...DEFAULT_CATEGORIES.income, ...(data.customCategories || [])];
+
+            return (
+                <div className="tab-content">
+                    <div className="header">
+                        <div className="header-title">Аналитика</div>
+                        <div className="header-subtitle">Инсайты и статистика</div>
+                    </div>
+
+                    <div className="period-selector">
+                        {['week', 'month', 'year'].map(p => (
+                            <button 
+                                key={p}
+                                className={`period-btn ${period === p ? 'active' : ''}`}
+                                onClick={() => setPeriod(p)}
+                            >
+                                {p === 'week' ? 'Неделя' : p === 'month' ? 'Месяц' : 'Год'}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="card">
+                        <div className="stat-grid">
+                            <div className="stat-card">
+                                <div className="stat-label">Доходы</div>
+                                <div className="stat-value positive">+{formatMoney(stats.income)}</div>
+                            </div>
+                            <div className="stat-card">
+                                <div className="stat-label">Расходы</div>
+                                <div className="stat-value negative">-{formatMoney(stats.expenses)}</div>
+                            </div>
+                            <div className="stat-card">
+                                <div className="stat-label">Баланс</div>
+                                <div className={`stat-value ${stats.balance >= 0 ? 'positive' : 'negative'}`}>
+                                    {stats.balance >= 0 ? '+' : ''}{formatMoney(stats.balance)}
+                                </div>
+                            </div>
+                            <div className="stat-card">
+                                <div className="stat-label">Привычки</div>
+                                <div className="stat-value">{stats.habitCompletionRate.toFixed(0)}%</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {Object.keys(stats.categoryStats).length > 0 && (
+                        <div className="card">
+                            <div className="card-header">
+                                <span className="card-title">Расходы по категориям</span>
+                            </div>
+                            {Object.entries(stats.categoryStats)
+                                .sort((a, b) => b[1] - a[1])
+                                .slice(0, 5)
+                                .map(([catId, amount]) => {
+                                    const category = allCategories.find(c => c.id === catId);
+                                    const percentage = (amount / stats.expenses * 100).toFixed(0);
+                                    return (
+                                        <div key={catId} className="transaction-item">
+                                            <div className="transaction-icon" style={{ background: category?.color + '20' }}>
+                                                {category?.emoji || '📝'}
+                                            </div>
+                                            <div className="transaction-info">
+                                                <div className="transaction-name">{category?.name || 'Другое'}</div>
+                                                <div className="transaction-date">{percentage}% от расходов</div>
+                                            </div>
+                                            <div className="transaction-amount expense">
+                                                {formatMoney(amount)}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                        </div>
+                    )}
+
+                    <div style={{ padding: '0 16px' }}>
+                        <button 
+                            className="btn btn-primary" 
+                            style={{ width: '100%' }}
+                            onClick={generateAIInsight}
+                            disabled={loading}
+                        >
+                            {loading ? (
+                                <div className="loading-spinner" />
+                            ) : (
+                                <>
+                                    <Icons.Sparkles />
+                                    AI Аналитика
+                                </>
+                            )}
+                        </button>
+                    </div>
+
+                    {showAI && (
+                        <div className="ai-insight-card">
+                            <div className="ai-header">
+                                <span className="ai-badge">✨ AI</span>
+                                <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Персональные инсайты</span>
+                            </div>
+                            <div className="ai-insight-text" style={{ whiteSpace: 'pre-line' }}>
+                                {aiInsight}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // Settings Tab
+        const SettingsTab = ({ data, setData, isDark, setIsDark }) => {
+            const [showCategoryModal, setShowCategoryModal] = useState(false);
+            const [categoryForm, setCategoryForm] = useState({
+                name: '',
+                emoji: '📦',
+                type: 'expense',
+                color: '#6366f1'
+            });
+
+            const addCategory = () => {
+                if (!categoryForm.name) return;
+                const newCategory = {
+                    id: `custom_${Date.now()}`,
+                    ...categoryForm
+                };
+                setData({
+                    ...data,
+                    customCategories: [...(data.customCategories || []), newCategory]
+                });
+                setShowCategoryModal(false);
+                setCategoryForm({ name: '', emoji: '📦', type: 'expense', color: '#6366f1' });
+            };
+
+            const exportData = () => {
+                const json = JSON.stringify(data, null, 2);
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'life-tracker-backup.json';
+                a.click();
+            };
+
+            const clearData = () => {
+                if (confirm('Вы уверены? Все данные будут удалены!')) {
+                    setData({
+                        accounts: [],
+                        transactions: [],
+                        habits: [],
+                        moods: [],
+                        customCategories: [],
+                        settings: { mainCurrency: 'USD' }
+                    });
+                }
+            };
+
+            return (
+                <div className="tab-content">
+                    <div className="header">
+                        <div className="header-title">Настройки</div>
+                        <div className="header-subtitle">Персонализация приложения</div>
+                    </div>
+
+                    <div className="card">
+                        <div className="card-header">
+                            <span className="card-title">Внешний вид</span>
+                        </div>
+                        <div className="settings-item">
+                            <span className="settings-label">🌙 Тёмная тема</span>
+                            <div 
+                                className={`toggle-switch ${isDark ? 'active' : ''}`}
+                                onClick={() => setIsDark(!isDark)}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="card">
+                        <div className="card-header">
+                            <span className="card-title">Валюта по умолчанию</span>
+                        </div>
+                        <select 
+                            className="form-input"
+                            value={data.settings?.mainCurrency || 'USD'}
+                            onChange={e => setData({
+                                ...data,
+                                settings: { ...data.settings, mainCurrency: e.target.value }
+                            })}
+                        >
+                            {CURRENCIES.fiat.map(c => (
+                                <option key={c.code} value={c.code}>{c.symbol} {c.code} - {c.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="card">
+                        <div className="card-header">
+                            <span className="card-title">Свои категории</span>
+                            <button className="btn btn-ghost" onClick={() => setShowCategoryModal(true)}>
+                                <Icons.Plus /> Добавить
+                            </button>
+                        </div>
+                        {(data.customCategories || []).length === 0 ? (
+                            <div className="empty-state">
+                                <div className="empty-state-text">Нет своих категорий</div>
+                            </div>
+                        ) : (
+                            data.customCategories.map(cat => (
+                                <div key={cat.id} className="transaction-item">
+                                    <div className="transaction-icon" style={{ background: cat.color + '20' }}>
+                                        {cat.emoji}
+                                    </div>
+                                    <div className="transaction-info">
+                                        <div className="transaction-name">{cat.name}</div>
+                                        <div className="transaction-date">{cat.type === 'expense' ? 'Расход' : 'Доход'}</div>
+                                    </div>
+                                    <button 
+                                        className="btn btn-ghost"
+                                        style={{ color: 'var(--danger)' }}
+                                        onClick={() => setData({
+                                            ...data,
+                                            customCategories: data.customCategories.filter(c => c.id !== cat.id)
+                                        })}
+                                    >
+                                        <Icons.Trash />
+                                    </button>
+                                </div>
+                            ))
+                        )}
+                    </div>
+
+                    <div className="card">
+                        <div className="card-header">
+                            <span className="card-title">Данные</span>
+                        </div>
+                        <button className="btn btn-secondary" style={{ width: '100%', marginBottom: '8px' }} onClick={exportData}>
+                            📦 Экспорт данных
+                        </button>
+                        <button className="btn btn-danger" style={{ width: '100%' }} onClick={clearData}>
+                            🗑️ Очистить все данные
+                        </button>
+                    </div>
+
+                    <div className="card" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+                        <p>Life Tracker v1.0</p>
+                        <p style={{ fontSize: '12px', marginTop: '4px' }}>Made with ❤️</p>
+                    </div>
+
+                    <Modal isOpen={showCategoryModal} onClose={() => setShowCategoryModal(false)} title="Новая категория">
+                        <div className="form-group">
+                            <div className="toggle-group">
+                                <button 
+                                    className={`toggle-btn ${categoryForm.type === 'expense' ? 'active' : ''}`}
+                                    onClick={() => setCategoryForm({...categoryForm, type: 'expense'})}
+                                >
+                                    Расход
+                                </button>
+                                <button 
+                                    className={`toggle-btn ${categoryForm.type === 'income' ? 'active' : ''}`}
+                                    onClick={() => setCategoryForm({...categoryForm, type: 'income'})}
+                                >
+                                    Доход
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Эмодзи</label>
+                            <input 
+                                type="text"
+                                className="form-input"
+                                placeholder="📦"
+                                value={categoryForm.emoji}
+                                onChange={e => setCategoryForm({...categoryForm, emoji: e.target.value})}
+                                style={{ fontSize: '24px', textAlign: 'center' }}
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Название</label>
+                            <input 
+                                type="text"
+                                className="form-input"
+                                placeholder="Например: Криптовалюты"
+                                value={categoryForm.name}
+                                onChange={e => setCategoryForm({...categoryForm, name: e.target.value})}
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Цвет</label>
+                            <input 
+                                type="color"
+                                className="form-input"
+                                value={categoryForm.color}
+                                onChange={e => setCategoryForm({...categoryForm, color: e.target.value})}
+                                style={{ height: '50px', padding: '4px' }}
+                            />
+                        </div>
+
+                        <button className="btn btn-primary" style={{ width: '100%', marginTop: '8px' }} onClick={addCategory}>
+                            Создать категорию
+                        </button>
+                    </Modal>
+                </div>
+            );
+        };
+
+        // ==================== MAIN APP ====================
+        
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('dashboard');
+            const [isDark, setIsDark] = useState(true);
+            const [data, setData] = useState({
+                accounts: [],
+                transactions: [],
+                habits: [],
+                moods: [],
+                customCategories: [],
+                settings: { mainCurrency: 'USD' }
+            });
+            const [loaded, setLoaded] = useState(false);
+
+            // Initialize Telegram WebApp
+            useEffect(() => {
+                if (window.Telegram?.WebApp) {
+                    window.Telegram.WebApp.ready();
+                    window.Telegram.WebApp.expand();
+                    
+                    // Get theme from Telegram
+                    const tgTheme = window.Telegram.WebApp.colorScheme;
+                    setIsDark(tgTheme === 'dark');
+                }
+            }, []);
+
+            // Load data
+            useEffect(() => {
+                const loadData = async () => {
+                    const saved = await storage.get('lifeTrackerData');
+                    if (saved) {
+                        setData(saved);
+                    }
+                    setLoaded(true);
+                };
+                loadData();
+            }, []);
+
+            // Save data
+            useEffect(() => {
+                if (loaded) {
+                    storage.set('lifeTrackerData', data);
+                }
+            }, [data, loaded]);
+
+            // Apply theme
+            useEffect(() => {
+                document.body.className = isDark ? '' : 'light-theme';
+            }, [isDark]);
+
+            const updateData = useCallback((newData) => {
+                setData(newData);
+            }, []);
+
+            if (!loaded) {
+                return (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+                        <div className="loading-spinner" />
+                    </div>
+                );
+            }
+
+            return (
+                <div className="app-container">
+                    {activeTab === 'dashboard' && <DashboardTab data={data} setActiveTab={setActiveTab} />}
+                    {activeTab === 'transactions' && <TransactionsTab data={data} setData={updateData} />}
+                    {activeTab === 'habits' && <HabitsTab data={data} setData={updateData} />}
+                    {activeTab === 'analytics' && <AnalyticsTab data={data} />}
+                    {activeTab === 'settings' && <SettingsTab data={data} setData={updateData} isDark={isDark} setIsDark={setIsDark} />}
+                    
+                    <NavBar activeTab={activeTab} setActiveTab={setActiveTab} />
+                </div>
+            );
+        };
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
